@@ -1,0 +1,163 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+}
+
+// ───────────────────────── User ─────────────────────────
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  passwordHash   String
+  name           String?
+  age            Int?
+  weight         Float?
+  height         Float?
+  gender         String?
+  activityLevel  String?
+  fitnessGoal    String?
+  dietaryPrefs   String[] @default([])
+  allergies      String[] @default([])
+  monthlyBudget  Float?
+  currency       String   @default("INR")
+  avatarUrl      String?
+
+  meals          Meal[]
+  mealPlans      MealPlan[]
+  groceryLists   GroceryList[]
+  dietAnalyses   DietAnalysis[]
+  dietComparisons DietComparison[]
+  chatMessages   ChatMessage[]
+  weightLogs     WeightLog[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ──────────────────── Standalone Meal ───────────────────
+
+model Meal {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  description     String?
+  cuisine         String?
+  mealType        String   @default("lunch")
+  servings        Int      @default(1)
+  prepTime        Int?
+  cookTime        Int?
+  ingredients     Json     @default("[]")
+  instructions    String[] @default([])
+  calories        Float?
+  protein         Float?
+  carbs           Float?
+  fat             Float?
+  fiber           Float?
+  estimatedCost   Float?
+  budgetRange     String?
+  createdAt       DateTime @default(now())
+}
+
+// ──────────────── Legacy Meal-Plan Models ───────────────
+
+model MealPlan {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date         DateTime   @default(now())
+  totalCost    Float
+  totalCals    Int
+  totalProtein Float
+  totalCarbs   Float
+  totalFat     Float
+  planMeals    PlanMeal[]
+  createdAt    DateTime   @default(now())
+}
+
+model PlanMeal {
+  id         String   @id @default(uuid())
+  mealPlanId String
+  mealPlan   MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  type       String
+  name       String
+  calories   Int
+  protein    Float
+  carbs      Float
+  fat        Float
+  cost       Float
+  ingredients String[] @default([])
+}
+
+// ─────────────────── Grocery List ──────────────────────
+
+model GroceryList {
+  id             String        @id @default(uuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String?
+  items          Json          @default("[]")
+  totalEstCost   Float?
+  mealIds        String[]      @default([])
+  createdAt      DateTime      @default(now())
+}
+
+// ─────────────────── Diet Analysis ─────────────────────
+
+model DietAnalysis {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodLog      String
+  mealType     String?
+  nutrition    Json     @default("{}")
+  healthScore  Float    @default(0)
+  insights     String[] @default([])
+  suggestions  String[] @default([])
+  warnings     String[] @default([])
+  createdAt    DateTime @default(now())
+}
+
+// ────────────────── Diet Comparison ────────────────────
+
+model DietComparison {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mealA           String
+  mealB           String
+  mealANutrition  Json     @default("{}")
+  mealBNutrition  Json     @default("{}")
+  winner          String?
+  comparison      String[] @default([])
+  costAnalysis    String?
+  createdAt       DateTime @default(now())
+}
+
+// ────────────────── Chat Messages ──────────────────────
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────── Weight Log ────────────────────────
+
+model WeightLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weight    Float
+  unit      String   @default("kg")
+  createdAt DateTime @default(now())
+}
